@@ -20,12 +20,10 @@ class InstallerMenu:
     async def run(self):
         # Add language selection before main menu
         languages = {"English": "en", "中文": "zh"}
-        selected_lang = await dialog_menu(
+        await dialog_menu(
             self.i18n.get("language_selection"),
-            {name: lambda l=code: self._set_language(l) for name, code in languages.items()}
+            {name: lambda code=code: self._set_language(code) for name, code in languages.items()}
         )
-        if selected_lang:
-            await selected_lang()
         await self._main_menu()
 
     def _set_language(self, language):
