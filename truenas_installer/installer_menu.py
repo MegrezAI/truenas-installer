@@ -28,6 +28,7 @@ class InstallerMenu:
 
     def _set_language(self, language):
         self.i18n = I18n(language)
+        return True
 
     async def _main_menu(self):
         await dialog_menu(
