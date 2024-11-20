@@ -9,23 +9,36 @@ from .disks import Disk, list_disks
 from .exception import InstallError
 from .install import install
 from .serial import serial_sql
+from .i18n import I18n
 
 
 class InstallerMenu:
     def __init__(self, installer):
         self.installer = installer
+        self.i18n = I18n()  # Default to English
 
     async def run(self):
+        # Add language selection before main menu
+        languages = {"English": "en", "中文": "zh"}
+        selected_lang = await dialog_menu(
+            self.i18n.get("language_selection"),
+            {name: lambda l=code: self._set_language(l) for name, code in languages.items()}
+        )
+        if selected_lang:
+            await selected_lang()
         await self._main_menu()
+
+    def _set_language(self, language):
+        self.i18n = I18n(language)
 
     async def _main_menu(self):
         await dialog_menu(
-            f"{self.installer.vendor} {self.installer.version} Console Setup",
+            f"{self.installer.vendor} {self.installer.version} {self.i18n.get('console_setup')}",
             {
-                "Install/Upgrade": self._install_upgrade,
-                "Shell": self._shell,
-                "Reboot System": self._reboot,
-                "Shutdown System": self._shutdown,
+                self.i18n.get("install_upgrade"): self._install_upgrade,
+                self.i18n.get("shell"): self._shell,
+                self.i18n.get("reboot"): self._reboot,
+                self.i18n.get("shutdown"): self._shutdown,
             }
         )
 
@@ -39,12 +52,12 @@ class InstallerMenu:
         vendor = self.installer.vendor
 
         if not disks:
-            await dialog_msgbox("Choose Destination Media", "No drives available")
+            await dialog_msgbox(self.i18n.get("choose_media"), self.i18n.get("no_drives"))
             return False
 
         while True:
             destination_disks = await dialog_checklist(
-                "Choose Destination Media",
+                self.i18n.get("choose_media"),
                 (
                     f"Install {vendor} to a drive. If desired, select multiple drives to provide redundancy. {vendor} "
                     "installation drive(s) are not available for use in storage pools. Use arrow keys to navigate "
@@ -67,8 +80,8 @@ class InstallerMenu:
 
             if not destination_disks:
                 await dialog_msgbox(
-                    "Choose Destination Media",
-                    "Select at least one disk to proceed with the installation.",
+                    self.i18n.get("choose_media"),
+                    self.i18n.get("select_disk"),
                 )
                 continue
 
@@ -95,24 +108,24 @@ class InstallerMenu:
             break
 
         text = "\n".join([
-            "WARNING:",
+            f"{self.i18n.get('warning')}",
             f"- This erases ALL partitions and data on {', '.join(sorted(wipe_disks + destination_disks))}.",
             f"- {', '.join(destination_disks)} will be unavailable for use in storage pools.",
             "",
-            "NOTE:",
+            f"{self.i18n.get('note')}",
             "- Installing on SATA, SAS, or NVMe flash media is recommended.",
             "  USB flash sticks are discouraged.",
             "",
-            "Proceed with the installation?"
+            self.i18n.get("proceed_install")
         ])
         if not await dialog_yesno(f"{self.installer.vendor} Installation", text):
             return False
 
         authentication_method = await dialog_menu(
-            "Web UI Authentication Method",
+            self.i18n.get("web_ui_auth"),
             {
-                "Administrative user (truenas_admin)": self._authentication_truenas_admin,
-                "Configure using Web UI": self._authentication_webui,
+                self.i18n.get("admin_user"): self._authentication_truenas_admin,
+                self.i18n.get("configure_webui"): self._authentication_webui,
             }
         )
         if authentication_method is False:
@@ -121,11 +134,8 @@ class InstallerMenu:
         set_pmbr = False
         if not self.installer.efi:
             set_pmbr = await dialog_yesno(
-                "Legacy Boot",
-                (
-                    "Allow EFI boot? Enter Yes for systems with newer components such as NVMe devices. Enter No when "
-                    "system hardware requires legacy BIOS boot workaround."
-                ),
+                self.i18n.get("legacy_boot"),
+                self.i18n.get("efi_prompt"),
             )
 
         # If the installer was booted with serial mode enabled, we should save these values to the installed system
@@ -142,14 +152,14 @@ class InstallerMenu:
                 self._callback,
             )
         except InstallError as e:
-            await dialog_msgbox("Installation Error", e.message)
+            await dialog_msgbox(self.i18n.get("install_error"), e.message)
             return False
 
         await dialog_msgbox(
-            "Installation Succeeded",
+            self.i18n.get("install_success"),
             (
                 f"The {self.installer.vendor} installation on {', '.join(destination_disks)} succeeded!\n"
-                "Please reboot and remove the installation media."
+                f"{self.i18n.get('reboot_prompt')}"
             ),
         )
         return True
