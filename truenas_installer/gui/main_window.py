@@ -5,10 +5,12 @@ from concurrent.futures import ThreadPoolExecutor
 import asyncio
 import sys
 
-from .pages import (
-    LanguagePage, MainMenuPage, DiskSelectionPage,
-    AuthPage, ProgressPage
-)
+from .pages.language_page import LanguagePage
+from .pages.main_menu_page import MainMenuPage
+from .pages.disk_selection_page import DiskSelectionPage
+from .pages.auth_page import AuthPage
+from .pages.progress_page import ProgressPage
+
 from ..install import install
 from ..serial import serial_sql
 from ..disks import list_disks
