@@ -8,7 +8,7 @@ from typing import Callable
 from .disks import Disk
 from .exception import InstallError
 from .lock import installation_lock
-from .utils import get_partitions, run
+from .utils import get_partitions, run, RAID_MIN_DISKS
 
 __all__ = ["InstallError", "install"]
 
@@ -576,13 +576,7 @@ async def verify_disk_selection(
 
         # 4. 验证磁盘数量
         if storage_pool:
-            min_disks = {
-                "STRIPE": 1,
-                "MIRROR": 2,
-                "RAIDZ1": 3,
-                "RAIDZ2": 4,
-                "RAIDZ3": 5,
-            }
+            min_disks = RAID_MIN_DISKS
             required = min_disks.get(storage_pool["topology_type"], 1)
             if len(storage_pool["disks"]) < required:
                 raise InstallError(

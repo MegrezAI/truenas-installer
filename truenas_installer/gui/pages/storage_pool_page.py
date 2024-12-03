@@ -18,7 +18,7 @@ from qfluentwidgets import (
     ComboBox,
     FluentIcon as FIF,
 )
-from ...utils import GiB
+from ...utils import GiB, RAID_MIN_DISKS
 from ...disks import list_disks
 from ..progress_indicator import ProgressIndicator
 import humanfriendly
@@ -321,13 +321,7 @@ class StoragePoolPage(QFrame):
         返回 (is_valid, error_message)
         """
         # 基本磁盘数量要求
-        min_disks = {
-            "STRIPE": 1,
-            "MIRROR": 2,
-            "RAIDZ1": 3,
-            "RAIDZ2": 4,
-            "RAIDZ3": 5,
-        }
+        min_disks = RAID_MIN_DISKS
 
         disk_count = len(selected_disks)
 

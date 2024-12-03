@@ -2,11 +2,18 @@ import asyncio
 import os
 import subprocess
 
-__all__ = ["GiB", "get_partitions", "run"]
+__all__ = ["GiB", "get_partitions", "run", "RAID_MIN_DISKS"]
 
 GiB = 1024 ** 3
 MAX_PARTITION_WAIT_TIME_SECS = 300
 
+RAID_MIN_DISKS = {
+    "STRIPE": 1,
+    "MIRROR": 2,
+    "RAIDZ1": 3,
+    "RAIDZ2": 4,
+    "RAIDZ3": 5,
+}
 
 async def get_partitions(
     device: str,
