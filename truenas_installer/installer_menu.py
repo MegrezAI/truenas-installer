@@ -95,13 +95,13 @@ class InstallerMenu:
             if wipe_disks:
                 # The presence of multiple `boot-pool` disks with different guids leads to boot pool import error
                 text = "\n".join([
-                    f"Disk(s) {', '.join(wipe_disks)} contain existing TrueNAS boot pool, but they were not "
-                    f"selected for TrueNAS installation. This configuration will not work unless these disks "
+                    f"Disk(s) {', '.join(wipe_disks)} contain existing OceanNAS boot pool, but they were not "
+                    f"selected for OceanNAS installation. This configuration will not work unless these disks "
                     "are erased.",
                     "",
                     f"Proceed with erasing {', '.join(wipe_disks)}?"
                 ])
-                if not await dialog_yesno("TrueNAS Installation", text):
+                if not await dialog_yesno("OceanNAS Installation", text):
                     continue
 
             break
@@ -148,6 +148,7 @@ class InstallerMenu:
                 authentication_method,
                 None,
                 sql,
+                None,
                 self._callback,
             )
         except InstallError as e:

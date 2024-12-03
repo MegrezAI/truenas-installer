@@ -1,94 +1,113 @@
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QComboBox, QHBoxLayout, QFrame
-from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5.QtCore import pyqtSignal, Qt
+from PyQt5.QtWidgets import QVBoxLayout, QFrame, QListWidgetItem, QHBoxLayout
+from qfluentwidgets import (
+    PrimaryPushButton,
+    SubtitleLabel,
+    BodyLabel,
+    setFont,
+    CardWidget,
+    LargeTitleLabel,
+)
 
-class LanguagePage(QWidget):
+
+class LanguagePage(QFrame):
     languageChanged = pyqtSignal(str)
-    
-    def __init__(self, i18n, installer_version):
-        super().__init__()
-        self.i18n = i18n
-        self.installer_version = installer_version
-        self.initUI()
-        
-    def initUI(self):
-        layout = QVBoxLayout()
-        layout.setContentsMargins(40, 40, 40, 40)
-        layout.setSpacing(30)
 
-        # Welcome title
-        self.welcome_title = QLabel(self.i18n.get("welcome_title"))
-        self.welcome_title.setAlignment(Qt.AlignCenter)
-        self.welcome_title.setStyleSheet("""
+    def __init__(self, i18n, version, parent=None):
+        super().__init__(parent=parent)
+        self.i18n = i18n
+        self.version = version
+
+        self.setObjectName("language-page")
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(20, 20, 20, 20)
+        layout.setSpacing(10)
+
+        # 创建卡片容器
+        card = CardWidget(self)
+        card_layout = QVBoxLayout(card)
+        card_layout.setContentsMargins(16, 16, 16, 16)
+        card_layout.setSpacing(8)
+
+        card_layout.addStretch()
+
+        # 创建一个容器来包含标题和描述
+        content_container = QHBoxLayout()
+        content_container.addStretch()
+
+        text_layout = QVBoxLayout()
+
+        # 标题
+        self.title_label = LargeTitleLabel(self.i18n.get("welcome_title"), self)
+        self.title_label.setStyleSheet(
+            """
             font-size: 32px;
             font-weight: bold;
             margin-bottom: 10px;
             color: #2980b9;
-        """)
-        layout.addWidget(self.welcome_title)
+        """
+        )
+        self.title_label.setAlignment(Qt.AlignCenter)
 
-        # Welcome message
-        self.welcome_msg = QLabel(self.i18n.get("welcome_message"))
-        self.welcome_msg.setAlignment(Qt.AlignCenter)
-        self.welcome_msg.setWordWrap(True)
-        self.welcome_msg.setStyleSheet("""
+        # 描述
+        self.description_label = BodyLabel(self.i18n.get("welcome_message"), self)
+        self.description_label.setFixedWidth(600)
+        self.description_label.setWordWrap(True)
+        self.description_label.setAlignment(Qt.AlignCenter)
+        self.description_label.setStyleSheet(
+            """
             font-size: 16px;
             color: #666;
             margin-bottom: 20px;
-        """)
-        layout.addWidget(self.welcome_msg)
+        """
+        )
 
-        # Language selection container
-        lang_container = self._create_language_section()
-        layout.addWidget(lang_container)
-        
-        layout.addStretch()
-        
-        # Version info
-        version_label = QLabel(f"Version {self.installer_version}")
-        version_label.setAlignment(Qt.AlignCenter)
-        version_label.setStyleSheet("color: #999; font-size: 12px;")
-        layout.addWidget(version_label)
+        # 将标题和描述添加到垂直布局中
+        text_layout.addWidget(self.title_label)
+        text_layout.addWidget(self.description_label)
 
-        self.setLayout(layout)
+        # 将垂直布局添加到容器中
+        content_container.addLayout(text_layout)
+        content_container.addStretch()
 
-    def _create_language_section(self):
-        lang_container = QFrame()
-        lang_layout = QVBoxLayout(lang_container)
-        lang_layout.setSpacing(15)
+        # 将容器添加到卡片布局中
+        card_layout.addLayout(content_container)
 
-        # Title
-        self.lang_title = QLabel(self.i18n.get("language_selection"))
-        self.lang_title.setObjectName("languageSelectionLabel")
-        self.lang_title.setAlignment(Qt.AlignCenter)
-        self.lang_title.setStyleSheet("""
-            font-size: 18px;
-            font-weight: bold;
-            color: #333;
-        """)
-        lang_layout.addWidget(self.lang_title)
+        card_layout.addSpacing(20)
 
-        # Combobox
-        self.language_combo = QComboBox()
-        self.language_combo.addItems(["English", "中文"])
-        self.language_combo.setFixedWidth(200)
-        self.language_combo.currentTextChanged.connect(self._on_language_changed)
-        
-        combo_container = QWidget()
-        combo_layout = QHBoxLayout()
-        combo_layout.addStretch()
-        combo_layout.addWidget(self.language_combo)
-        combo_layout.addStretch()
-        combo_container.setLayout(combo_layout)
-        
-        lang_layout.addWidget(combo_container)
-        
-        return lang_container
+        # 语言按钮
+        button_layout = QHBoxLayout()
+        button_layout.setSpacing(20)
 
-    def _on_language_changed(self, selected_language):
-        self.languageChanged.emit(selected_language)
+        # 中文按钮
+        self.zh_button = PrimaryPushButton("使用中文进行安装", self)
+        self.zh_button.setFixedHeight(40)
+        self.zh_button.clicked.connect(lambda: self.on_language_selected("简体中文"))
+
+        # 英文按钮
+        self.en_button = PrimaryPushButton("Install with English", self)
+        self.en_button.setFixedHeight(40)
+        self.en_button.clicked.connect(lambda: self.on_language_selected("English"))
+
+        button_layout.addStretch()
+        button_layout.addWidget(self.zh_button)
+        button_layout.addWidget(self.en_button)
+        button_layout.addStretch()
+
+        card_layout.addSpacing(20)
+        card_layout.addLayout(button_layout)
+
+        card_layout.addStretch()
+
+        # 将卡片添加到主布局
+        layout.addWidget(card, stretch=1)
+
+    def on_language_selected(self, language):
+        self.languageChanged.emit(language)
+        window = self.window()
+        window.start_installation()
 
     def update_texts(self):
-        self.welcome_title.setText(self.i18n.get("welcome_title"))
-        self.welcome_msg.setText(self.i18n.get("welcome_message"))
-        self.lang_title.setText(self.i18n.get("language_selection"))
-        
+        self.title_label.setText(self.i18n.get("welcome_title"))
+        self.message_label.setText(self.i18n.get("language_selection"))

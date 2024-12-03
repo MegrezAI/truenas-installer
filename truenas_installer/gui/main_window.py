@@ -1,5 +1,19 @@
-from PyQt5.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, 
-                           QPushButton, QStackedWidget, QApplication, QMessageBox, QProgressDialog)
+from qfluentwidgets import (
+    FluentWindow,
+    PushButton,
+    FluentIcon as FIF,
+    MessageBox,
+    InfoBar,
+    InfoBarPosition,
+    NavigationWidget,
+)
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import (
+    QWidget,
+    QVBoxLayout,
+    QApplication,
+    QFrame,
+)
 from PyQt5.QtCore import Qt, QTimer
 from concurrent.futures import ThreadPoolExecutor
 import asyncio
@@ -10,6 +24,7 @@ from .pages.main_menu_page import MainMenuPage
 from .pages.disk_selection_page import DiskSelectionPage
 from .pages.auth_page import AuthPage
 from .pages.progress_page import ProgressPage
+from .pages.storage_pool_page import StoragePoolPage
 
 from ..install import install
 from ..serial import serial_sql
@@ -17,142 +32,97 @@ from ..disks import list_disks
 from ..exception import InstallError
 from ..i18n import I18n
 
-class InstallerWindow(QMainWindow):
+
+class InstallerPage(QFrame):
+    def __init__(self, text: str, parent=None):
+        super().__init__(parent=parent)
+        self.setObjectName(text.replace(" ", "-"))  # 设置唯一的对象名
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(20, 20, 20, 20)
+        layout.setSpacing(10)
+
+
+class InstallerWindow(FluentWindow):
     def __init__(self, installer, loop):
         super().__init__()
+
         self.installer = installer
         self.i18n = I18n()
         self.loop = loop
         self.executor = ThreadPoolExecutor(max_workers=1)
-        
+
         self.selected_disks = []
         self.wipe_disks = []
         self.set_pmbr = False
-        
-        self.initUI()
-        
-    def initUI(self):
-        self.setWindowTitle('OceanNAS Installer')
-        self.setFixedSize(800, 600)
-        
+
+        self.initWindow()
+        self.initPages()
+
+    def initWindow(self):
+        # Update window properties
+        self.resize(1024, 768)
+        self.setWindowTitle("OceanNAS Installer")
+
+        # 设置最小窗口尺寸，防止窗口太小
+        self.setMinimumSize(800, 600)
+
+        # 隐藏导航栏
+        self.navigationInterface.hide()
+
         # Center window
         screen = QApplication.primaryScreen().geometry()
         x = (screen.width() - self.width()) // 2
         y = (screen.height() - self.height()) // 2
         self.move(x, y)
 
-        # Create central widget and main layout
-        central_widget = QWidget()
-        self.setCentralWidget(central_widget)
-        main_layout = QVBoxLayout(central_widget)
-        main_layout.setContentsMargins(20, 20, 20, 20)
-        main_layout.setSpacing(10)
-
-        # Create stacked widget and pages
-        self.stacked_widget = QStackedWidget()
-        self._create_pages()
-        main_layout.addWidget(self.stacked_widget)
-
-        # Create navigation
-        nav_layout = self._create_navigation()
-        main_layout.addLayout(nav_layout)
-
         # Setup async timer
         self.timer = QTimer()
         self.timer.timeout.connect(self.process_async_tasks)
         self.timer.start(100)
 
-        self.update_navigation_buttons()
-
-    def _create_pages(self):
+    def initPages(self):
         # Initialize pages
         self.language_page = LanguagePage(self.i18n, self.installer.version)
-        self.main_menu_page = MainMenuPage(self.installer, self.i18n)
+        # 暂时注释掉主菜单页面
+        # self.main_menu_page = MainMenuPage(self.installer, self.i18n)
         self.disk_selection_page = DiskSelectionPage(self.i18n)
+        self.storage_pool_page = StoragePoolPage(self.i18n)
         self.auth_page = AuthPage(self.i18n)
         self.progress_page = ProgressPage(self.i18n)
 
-        # Connect signals
-        self.language_page.languageChanged.connect(self.on_language_changed)
-        self.main_menu_page.installationRequested.connect(self.start_installation)
-        self.main_menu_page.shellRequested.connect(self.open_shell)
-        self.main_menu_page.rebootRequested.connect(lambda: self.run_async(self._async_reboot()))
-        self.main_menu_page.shutdownRequested.connect(lambda: self.run_async(self._async_shutdown()))
-        
-        self.disk_selection_page.disksSelected.connect(self.on_disks_selected)
-        self.auth_page.installationRequested.connect(self.start_install)
-        self.progress_page.rebootRequested.connect(lambda: self.run_async(self._async_reboot()))
+        # Set object names for all pages
+        self.language_page.setObjectName("language-page")
+        # self.main_menu_page.setObjectName('main-menu-page')
+        self.disk_selection_page.setObjectName("disk-selection-page")
+        self.storage_pool_page.setObjectName("storage-pool-page")
+        self.auth_page.setObjectName("auth-page")
+        self.progress_page.setObjectName("progress-page")
 
         # Add pages to stacked widget
-        self.stacked_widget.addWidget(self.language_page)
-        self.stacked_widget.addWidget(self.main_menu_page)
-        self.stacked_widget.addWidget(self.disk_selection_page)
-        self.stacked_widget.addWidget(self.auth_page)
-        self.stacked_widget.addWidget(self.progress_page)
+        self.stackedWidget.addWidget(self.language_page)
+        # self.stackedWidget.addWidget(self.main_menu_page)
+        self.stackedWidget.addWidget(self.disk_selection_page)
+        self.stackedWidget.addWidget(self.storage_pool_page)
+        self.stackedWidget.addWidget(self.auth_page)
+        self.stackedWidget.addWidget(self.progress_page)
 
-    def _create_navigation(self):
-        nav_layout = QHBoxLayout()
-        
-        self.back_btn = QPushButton(self.i18n.get("back"))
-        self.next_btn = QPushButton(self.i18n.get("next"))
-        
-        self.back_btn.setFixedWidth(100)
-        self.next_btn.setFixedWidth(100)
-        
-        self.back_btn.clicked.connect(self.go_back)
-        self.next_btn.clicked.connect(self.go_next)
-        
-        nav_layout.addWidget(self.back_btn)
-        nav_layout.addStretch()
-        nav_layout.addWidget(self.next_btn)
-        
-        return nav_layout
+        # Connect signals
+        self.language_page.languageChanged.connect(self.on_language_changed)
 
-    def update_navigation_buttons(self):
-        current_index = self.stacked_widget.currentIndex()
-        
-        # Hide navigation on main menu and progress page
-        if current_index in [1, 4]:  # main_menu_page or progress_page
-            self.back_btn.hide()
-            self.next_btn.hide()
-            return
-            
-        # Hide back button on first page
-        if current_index == 0:
-            self.back_btn.hide()
-        else:
-            self.back_btn.show()
-            
-        self.next_btn.show()
-        
-        # Update back button
-        self.back_btn.setEnabled(current_index > 0)
-        
-        # Update next button text and state
-        if current_index == 3:  # auth_page
-            self.next_btn.setText(self.i18n.get("install"))
-        else:
-            self.next_btn.setText(self.i18n.get("next"))
+        # self.main_menu_page.installationRequested.connect(self.start_installation)
+        # self.main_menu_page.shellRequested.connect(self.open_shell)
+        # self.main_menu_page.rebootRequested.connect(lambda: self.run_async(self._async_reboot()))
+        # self.main_menu_page.shutdownRequested.connect(lambda: self.run_async(self._async_shutdown()))
+        self.disk_selection_page.disksSelected.connect(self.on_disks_selected)
+        self.storage_pool_page.poolConfigured.connect(self.on_pool_configured)
+        self.auth_page.installationRequested.connect(self.start_install)
+        self.progress_page.rebootRequested.connect(
+            lambda: self.run_async(self._async_reboot())
+        )
 
-    def go_back(self):
-        current_index = self.stacked_widget.currentIndex()
-        if current_index > 0:
-            self.stacked_widget.setCurrentIndex(current_index - 1)
-            self.update_navigation_buttons()
-
-    def go_next(self):
-        current_index = self.stacked_widget.currentIndex()
-        if current_index == 0:  # Language page
-            self.stacked_widget.setCurrentWidget(self.main_menu_page)
-        elif current_index == 2:  # Disk selection page
-            if self.disk_selection_page.validate_selection(self.installer):
-                self.stacked_widget.setCurrentWidget(self.auth_page)
-        elif current_index == 3:  # Auth page
-            auth_method = self.auth_page.validate_and_get_auth()
-            if auth_method is not None:
-                self.start_install(auth_method)
-        
-        self.update_navigation_buttons()
+        # Set initial page
+        self.stackedWidget.setCurrentWidget(self.language_page)
 
     def process_async_tasks(self):
         try:
@@ -171,55 +141,65 @@ class InstallerWindow(QMainWindow):
         self.update_ui_texts()
 
     def update_ui_texts(self):
-        # Update navigation buttons
-        self.back_btn.setText(self.i18n.get("back"))
-        self.next_btn.setText(self.i18n.get("next"))
-        
         # Update all pages
-        self.language_page.update_texts()
-        self.main_menu_page.update_texts()
+        # self.language_page.update_texts()
+        # self.main_menu_page.update_texts()  # 暂时注释掉
         self.disk_selection_page.update_texts()
+        self.storage_pool_page.update_texts()
         self.auth_page.update_texts()
         self.progress_page.update_texts()
 
-    def start_installation(self):
-        # 显示加载对话框
-        self.loading_dialog = QProgressDialog(
-            self.i18n.get("scanning_disks"),  # 使用扫描磁盘的提示文本
-            None,  # 取消按钮文本（None表示不显示取消按钮）
-            0,     # 最小值
-            0,     # 最大值（0表示显示忙碌指示器）
-            self   # 父窗口
-        )
-        
-        self.loading_dialog.setWindowTitle(self.i18n.get("disk_selection"))
-        self.loading_dialog.setWindowModality(Qt.WindowModal)
-        self.loading_dialog.setAutoClose(True)
-        self.loading_dialog.show()
+        page_text_mapping = {
+            self.language_page.objectName(): "language",
+            # self.main_menu_page.objectName(): "main_menu",
+            self.disk_selection_page.objectName(): "disk_selection",
+            self.storage_pool_page.objectName(): "storage_pool",
+            self.auth_page.objectName(): "authentication",
+            self.progress_page.objectName(): "progress",
+        }
 
-        # 切换到磁盘选择页面并加载磁盘列表
-        self.stacked_widget.setCurrentWidget(self.disk_selection_page)
+        for item in self.navigationInterface.findChildren(QWidget):
+            route_key = item.property("routeKey")
+            if route_key in page_text_mapping:
+                item.setText(self.i18n.get(page_text_mapping[route_key]))
+
+        # 保持当前页面选中
+        current_page = self.stackedWidget.currentWidget()
+        if current_page:
+            self.navigationInterface.setCurrentItem(current_page.objectName())
+
+    def start_installation(self):
+        # 切换到磁盘选择页面并显示加载状态
+        self.stackedWidget.setCurrentWidget(self.disk_selection_page)
+        self.disk_selection_page.show_loading()
+        # 加载磁盘列表
         self.run_async(self.load_disk_list())
-        self.update_navigation_buttons()
 
     async def load_disk_list(self):
         try:
             disks = await list_disks()
             await self.disk_selection_page.refresh_disk_list(disks)
         except Exception as e:
-            QMessageBox.critical(self, "Error", str(e))
-        finally:
-            # 关闭加载对话框
-            self.loading_dialog.close()
+            box = MessageBox(self.i18n.get("error"), str(e), self)
+            box.exec()
 
     def on_disks_selected(self, selected_disks, wipe_disks, set_pmbr):
         self.selected_disks = selected_disks
         self.wipe_disks = wipe_disks
         self.set_pmbr = set_pmbr
+        self.stackedWidget.setCurrentWidget(self.storage_pool_page)
+
+    def on_pool_configured(self, config):
+        # 如果是跳过，config 将是空字典
+        if config:
+            # 处理存储池配置
+            self.pool_config = config
+
+        # 无论是否配置了存储池，都继续下一步
+        self.stackedWidget.setCurrentWidget(self.auth_page)
 
     def start_install(self, auth_method):
-        self.stacked_widget.setCurrentWidget(self.progress_page)
-        self.update_navigation_buttons()
+        self.stackedWidget.setCurrentWidget(self.progress_page)
         self.run_async(self.installation_process(auth_method))
 
     async def installation_process(self, auth_method):
@@ -229,29 +209,18 @@ class InstallerWindow(QMainWindow):
                 self.wipe_disks,
                 self.set_pmbr,
                 auth_method,
-                None,  # post_install
+                None,
                 await serial_sql(),
-                self.progress_page.update_progress
+                getattr(self, "pool_config", None),
+                self.progress_page.update_progress,
             )
-            
+
             self.progress_page.show_completion()
-            
-            QMessageBox.information(
-                self, 
-                self.i18n.get("install_success"),
-                self.i18n.get(
-                    "install_success_message",
-                    vendor=self.installer.vendor,
-                    disks=', '.join(d.name for d in self.selected_disks),
-                    reboot_prompt=self.i18n.get('reboot_prompt')
-                )
-            )
-            
+
         except InstallError as e:
             self.progress_page.show_error()
-            QMessageBox.critical(self, self.i18n.get("install_error"), e.message)
-            self.stacked_widget.setCurrentWidget(self.disk_selection_page)
-            self.update_navigation_buttons()
+            self.show_message(self.i18n.get("install_error"), e.message, "error")
+            self.stackedWidget.setCurrentWidget(self.disk_selection_page)
 
     def open_shell(self):
         sys.exit(1)
@@ -268,3 +237,25 @@ class InstallerWindow(QMainWindow):
         self.timer.stop()
         self.executor.shutdown(wait=False)
         event.accept()
+
+    def show_message(self, title, message, type="info"):
+        if type == "error":
+            InfoBar.error(
+                title=title,
+                content=message,
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=2000,
+                parent=self,
+            )
+        else:
+            InfoBar.success(
+                title=title,
+                content=message,
+                orient=Qt.Horizontal,
+                isClosable=True,
+                position=InfoBarPosition.TOP,
+                duration=2000,
+                parent=self,
+            )
