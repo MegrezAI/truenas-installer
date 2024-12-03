@@ -393,13 +393,7 @@ async def create_storage_pool(topology_type: str, disks: list[str], callback: Ca
             await run(["zpool", "labelclear", "-f", f"/dev/{disk}"], check=False)
 
         # 2. 验证磁盘数量
-        min_disks = {
-            "STRIPE": 1,
-            "MIRROR": 2,
-            "RAIDZ1": 3,
-            "RAIDZ2": 4,
-            "RAIDZ3": 5,
-        }
+        min_disks = RAID_MIN_DISKS
         if len(disks) < min_disks.get(topology_type, 1):
             raise InstallError(
                 f"{topology_type} requires at least {min_disks[topology_type]} disks"
