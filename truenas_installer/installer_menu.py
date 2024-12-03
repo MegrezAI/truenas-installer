@@ -4,7 +4,13 @@ import sys
 
 import humanfriendly
 
-from .dialog import dialog_checklist, dialog_menu, dialog_msgbox, dialog_password, dialog_yesno
+from .dialog import (
+    dialog_checklist,
+    dialog_menu,
+    dialog_msgbox,
+    dialog_password,
+    dialog_yesno,
+)
 from .disks import Disk, list_disks
 from .exception import InstallError
 from .install import install
@@ -26,7 +32,7 @@ class InstallerMenu:
                 "Shell": self._shell,
                 "Reboot System": self._reboot,
                 "Shutdown System": self._shutdown,
-            }
+            },
         )
 
     async def _install_upgrade(self):
@@ -51,14 +57,16 @@ class InstallerMenu:
                     "options. Press spacebar to select."
                 ),
                 {
-                    disk.name: " ".join([
-                        disk.model[:15].ljust(15, " "),
-                        disk.label[:15].ljust(15, " "),
-                        "--",
-                        humanfriendly.format_size(disk.size, binary=True)
-                    ])
+                    disk.name: " ".join(
+                        [
+                            disk.model[:15].ljust(15, " "),
+                            disk.label[:15].ljust(15, " "),
+                            "--",
+                            humanfriendly.format_size(disk.size, binary=True),
+                        ]
+                    )
                     for disk in disks
-                }
+                },
             )
 
             if destination_disks is None:
@@ -76,35 +84,42 @@ class InstallerMenu:
                 disk.name
                 for disk in disks
                 if (
-                    any(zfs_member.pool == "boot-pool" for zfs_member in disk.zfs_members) and
-                    disk.name not in destination_disks
+                    any(
+                        zfs_member.pool == "boot-pool"
+                        for zfs_member in disk.zfs_members
+                    )
+                    and disk.name not in destination_disks
                 )
             ]
             if wipe_disks:
                 # The presence of multiple `boot-pool` disks with different guids leads to boot pool import error
-                text = "\n".join([
-                    f"Disk(s) {', '.join(wipe_disks)} contain existing TrueNAS boot pool, but they were not "
-                    f"selected for TrueNAS installation. This configuration will not work unless these disks "
-                    "are erased.",
-                    "",
-                    f"Proceed with erasing {', '.join(wipe_disks)}?"
-                ])
+                text = "\n".join(
+                    [
+                        f"Disk(s) {', '.join(wipe_disks)} contain existing TrueNAS boot pool, but they were not "
+                        f"selected for TrueNAS installation. This configuration will not work unless these disks "
+                        "are erased.",
+                        "",
+                        f"Proceed with erasing {', '.join(wipe_disks)}?",
+                    ]
+                )
                 if not await dialog_yesno("TrueNAS Installation", text):
                     continue
 
             break
 
-        text = "\n".join([
-            "WARNING:",
-            f"- This erases ALL partitions and data on {', '.join(sorted(wipe_disks + destination_disks))}.",
-            f"- {', '.join(destination_disks)} will be unavailable for use in storage pools.",
-            "",
-            "NOTE:",
-            "- Installing on SATA, SAS, or NVMe flash media is recommended.",
-            "  USB flash sticks are discouraged.",
-            "",
-            "Proceed with the installation?"
-        ])
+        text = "\n".join(
+            [
+                "WARNING:",
+                f"- This erases ALL partitions and data on {', '.join(sorted(wipe_disks + destination_disks))}.",
+                f"- {', '.join(destination_disks)} will be unavailable for use in storage pools.",
+                "",
+                "NOTE:",
+                "- Installing on SATA, SAS, or NVMe flash media is recommended.",
+                "  USB flash sticks are discouraged.",
+                "",
+                "Proceed with the installation?",
+            ]
+        )
         if not await dialog_yesno(f"{self.installer.vendor} Installation", text):
             return False
 
@@ -116,7 +131,7 @@ class InstallerMenu:
                 {
                     "Administrative user (truenas_admin)": self._authentication_truenas_admin,
                     "Configure using Web UI": self._authentication_webui,
-                }
+                },
             )
             if authentication_method is False:
                 return False
@@ -142,6 +157,7 @@ class InstallerMenu:
                 authentication_method,
                 None,
                 sql,
+                None,
                 self._callback,
             )
         except InstallError as e:
@@ -164,7 +180,7 @@ class InstallerMenu:
     async def _authentication_truenas_admin(self):
         return await self._authentication_password(
             "truenas_admin",
-            "Enter your \"truenas_admin\" user password. Root password login will be disabled.",
+            'Enter your "truenas_admin" user password. Root password login will be disabled.',
         )
 
     async def _authentication_password(self, username, title):

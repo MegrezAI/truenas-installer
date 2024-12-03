@@ -4,3 +4,4 @@ dist/*
 ixhardware.egg*
 __pycache__
 *.pyc
+venv
