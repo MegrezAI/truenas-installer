@@ -44,6 +44,9 @@ async def install(
         callback: 进度回调函数
     """
     with installation_lock:
+        if not os.path.exists("/etc/hostid"):
+            await run(["zgenhostid"])
+
         # 初始化已创建池的列表
         pools_created = []
 
