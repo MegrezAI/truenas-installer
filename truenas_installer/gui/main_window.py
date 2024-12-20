@@ -31,7 +31,7 @@ from ..serial import serial_sql
 from ..disks import list_disks
 from ..exception import InstallError
 from ..i18n import I18n
-
+import subprocess
 
 class InstallerPage(QFrame):
     def __init__(self, text: str, parent=None):
@@ -60,6 +60,17 @@ class InstallerWindow(FluentWindow):
         self.initPages()
 
     def initWindow(self):
+        
+        try:
+            # set background to black
+            subprocess.run(["hsetroot", "-solid", "#000000"], check=False)
+            # check if picom is running
+            subprocess.run(["pgrep", "-x", "picom"], check=False)
+            # start picom
+            subprocess.run(["picom", "-b"], check=False)
+        except Exception:
+            pass
+        
         # Update window properties
         self.resize(1024, 768)
         self.setWindowTitle("OceanNAS Installer")
