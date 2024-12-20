@@ -36,7 +36,7 @@ from ..i18n import I18n
 class InstallerPage(QFrame):
     def __init__(self, text: str, parent=None):
         super().__init__(parent=parent)
-        self.setObjectName(text.replace(" ", "-"))  # 设置唯一的对象名
+        self.setObjectName(text.replace(" ", "-"))  
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(20, 20, 20, 20)
@@ -63,20 +63,21 @@ class InstallerWindow(FluentWindow):
         # Update window properties
         self.resize(1024, 768)
         self.setWindowTitle("OceanNAS Installer")
+        
+        # 隐藏标题栏按钮
+        self.titleBar.maxBtn.hide()
+        self.titleBar.minBtn.hide()
+        self.titleBar.closeBtn.hide()
 
-        # 设置最小窗口尺寸，防止窗口太小
         self.setMinimumSize(800, 600)
 
-        # 隐藏导航栏
         self.navigationInterface.hide()
 
-        # Center window
         screen = QApplication.primaryScreen().geometry()
         x = (screen.width() - self.width()) // 2
         y = (screen.height() - self.height()) // 2
         self.move(x, y)
 
-        # Setup async timer
         self.timer = QTimer()
         self.timer.timeout.connect(self.process_async_tasks)
         self.timer.start(100)

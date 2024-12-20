@@ -77,7 +77,12 @@ def main():
         titleBar = StandardTitleBar(splash)
         titleBar.setIcon(window.windowIcon())
         titleBar.setTitle(window.windowTitle())
-
+        
+        
+        titleBar.maxBtn.hide()
+        titleBar.minBtn.hide()
+        titleBar.closeBtn.hide()
+        
         splash.setTitleBar(titleBar)
 
         # Show main window first

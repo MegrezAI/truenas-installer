@@ -18,7 +18,7 @@ from qfluentwidgets import (
     ComboBox,
     FluentIcon as FIF,
 )
-from ...utils import GiB
+from ...utils import GiB, RAID_MIN_DISKS
 from ...disks import list_disks
 from ..progress_indicator import ProgressIndicator
 import humanfriendly
@@ -321,13 +321,7 @@ class StoragePoolPage(QFrame):
         返回 (is_valid, error_message)
         """
         # 基本磁盘数量要求
-        min_disks = {
-            "STRIPE": 1,
-            "MIRROR": 2,
-            "RAIDZ1": 3,
-            "RAIDZ2": 4,
-            "RAIDZ3": 5,
-        }
+        min_disks = RAID_MIN_DISKS
 
         disk_count = len(selected_disks)
 
@@ -340,10 +334,8 @@ class StoragePoolPage(QFrame):
         # 修复磁盘大小计算
         disk_sizes = []
         for disk in selected_disks:
-            # 解析类似 "500.0 GB" 或 "1.0 TB" 这样���字符串
             size_str = disk.size
             try:
-                # 使用 humanfriendly 来解析大小字符串为字节数
                 size_bytes = humanfriendly.parse_size(size_str)
                 disk_sizes.append(size_bytes)
             except Exception:
@@ -426,7 +418,6 @@ class StoragePoolPage(QFrame):
 
         # 构建存储池配置
         config = {
-            "name": "tank",  # 默认池名称
             "topology_type": topology_type,
             "disks": [disk.name.replace("/dev/", "") for disk in selected_disks],
         }
@@ -508,14 +499,7 @@ class StoragePoolPage(QFrame):
         selected_disks = [card for card in self.disk_cards if card.selected]
 
         # RAID类型最小磁盘数要求
-        min_disks = {
-            "STRIPE": 1,
-            "MIRROR": 2,
-            "RAIDZ1": 3,
-            "RAIDZ2": 4,
-            "RAIDZ3": 5,
-        }
-
+        min_disks = RAID_MIN_DISKS
         # 如果已选磁盘数量不满足新RAID类型的要求
         if len(selected_disks) > 0 and len(selected_disks) < min_disks.get(
             topology_type, 1

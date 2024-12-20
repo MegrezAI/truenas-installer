@@ -8,7 +8,7 @@ from typing import Callable
 from .disks import Disk
 from .exception import InstallError
 from .lock import installation_lock
-from .utils import get_partitions, run
+from .utils import get_partitions, run, RAID_MIN_DISKS
 
 __all__ = ["InstallError", "install"]
 
@@ -396,13 +396,7 @@ async def create_storage_pool(topology_type: str, disks: list[str], callback: Ca
             await run(["zpool", "labelclear", "-f", f"/dev/{disk}"], check=False)
 
         # 2. 验证磁盘数量
-        min_disks = {
-            "STRIPE": 1,
-            "MIRROR": 2,
-            "RAIDZ1": 3,
-            "RAIDZ2": 4,
-            "RAIDZ3": 5,
-        }
+        min_disks = RAID_MIN_DISKS
         if len(disks) < min_disks.get(topology_type, 1):
             raise InstallError(
                 f"{topology_type} requires at least {min_disks[topology_type]} disks"
@@ -579,14 +573,7 @@ async def verify_disk_selection(
 
         # 4. 验证磁盘数量
         if storage_pool:
-            min_disks = {
-                "STRIPE": 1,
-                "MIRROR": 2,
-                "RAIDZ1": 3,
-                "RAIDZ2": 4,
-                "RAIDZ3": 5,
-            }
-            required = min_disks.get(storage_pool["topology_type"], 1)
+            required = RAID_MIN_DISKS.get(storage_pool["topology_type"], 1)
             if len(storage_pool["disks"]) < required:
                 raise InstallError(
                     f"Storage pool type {storage_pool['topology_type']} requires at least "
