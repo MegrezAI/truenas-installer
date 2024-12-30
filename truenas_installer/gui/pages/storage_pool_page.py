@@ -17,6 +17,7 @@ from qfluentwidgets import (
     BodyLabel,
     ComboBox,
     FluentIcon as FIF,
+    ScrollArea,
 )
 from ...utils import GiB, RAID_MIN_DISKS
 from ...disks import list_disks
@@ -121,7 +122,7 @@ class StoragePoolPage(QFrame):
         for topology_type, _ in self.raid_options:
             self.raid_combo.addItem(
                 self.i18n.get(topology_type)
-            )  # 直接使用topology_type，因为i18n中已经定义
+            ) 
 
         # 更新RAID描述
         current_index = self.raid_combo.currentIndex()
@@ -202,7 +203,7 @@ class StoragePoolPage(QFrame):
         self.disks_container = CardWidget(self)
         disks_layout = QVBoxLayout(self.disks_container)
         disks_layout.setContentsMargins(16, 16, 16, 16)
-        disks_layout.setSpacing(8)
+        disks_layout.setSpacing(16)
         disks_layout.setAlignment(Qt.AlignTop)
 
         # 添加进度指示器
@@ -215,18 +216,24 @@ class StoragePoolPage(QFrame):
         # 创建磁盘网格的容器widget
         self.disks_grid_widget = QWidget()
         self.disks_grid = QGridLayout(self.disks_grid_widget)
-        self.disks_grid.setSpacing(8)
+        self.disks_grid.setSpacing(16)
         self.disks_grid.setAlignment(Qt.AlignLeft | Qt.AlignTop)
         disks_layout.addWidget(self.disks_grid_widget)
 
         # 添加一个弹性空间到磁盘容器布局的底部
         disks_layout.addStretch()
 
-        # 将磁盘容器添加到主布局并设置伸展
-        layout.addWidget(self.disks_container, stretch=1)
+        scroll_area = ScrollArea(self)
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        scroll_area.setViewportMargins(0, 0, 0, 0)
 
-        # 添加弹性空间
-        layout.addStretch()
+        # 将磁盘容器放入滚动区域
+        scroll_area.setWidget(self.disks_container)
+        
+        # 设置滚动区域为伸展的
+        layout.addWidget(scroll_area, 1)
 
         # 添加按钮布局
         button_layout = QHBoxLayout()
@@ -401,15 +408,19 @@ class StoragePoolPage(QFrame):
         # 计算可用空间
         usable_space = self.calculate_usable_space(topology_type, selected_disks)
 
+        disk_names = ", ".join([disk.name for disk in selected_disks])
+        warning_message = self.i18n.get(
+            "pool_creation_warning",
+            topology=topology_type,
+            disk_count=len(selected_disks),
+            usable_space=humanfriendly.format_size(usable_space, binary=True),
+            disk_names=disk_names
+        )
+
         # 显示确认对话框
         confirm_dialog = MessageDialog(
-            self.i18n.get("confirm_pool_creation"),
-            self.i18n.get(
-                "pool_creation_summary",
-                topology=topology_type,
-                disk_count=len(selected_disks),
-                usable_space=humanfriendly.format_size(usable_space, binary=True),
-            ),
+            self.i18n.get("warning"),
+            warning_message,
             self,
         )
 

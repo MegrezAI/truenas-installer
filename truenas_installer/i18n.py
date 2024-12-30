@@ -76,7 +76,7 @@ TRANSLATIONS = {
         "storage_pool": "Storage Pool",
         "create_storage_pool": "Create Storage Pool",
         "storage_pool_description": (
-            "Please select the RAID level and disks for your storage pool. "
+            "Please select the RAID level and disks for your storage pool.\n"
             "You can also skip this step and create storage pools later through the web interface."
         ),
         "raid_level": "RAID Level",
@@ -123,6 +123,22 @@ TRANSLATIONS = {
             "{type} requires at least {required} disks, but only {current} disk(s) selected.\n"
             "Current disk selection will be cleared. Please select disks again."
         ),
+        "disk_selection_description": (
+            "Please select the disk(s) for system installation. If more than one disk is selected, "
+            "a RAID1 device will be created.\n"
+            "System installation disks are only used for the system and cannot be used for storage pools."
+        ),
+        "pool_creation_warning": """
+            This operation will erase ALL data on the following disks:
+            {disk_names}
+
+            Pool Configuration:
+            - RAID Level: {topology}
+            - Number of Disks: {disk_count}
+            - Usable Space: {usable_space}
+            
+            Do you want to proceed with creating the storage pool?
+        """,
     },
     "zh": {
         "language": "语言",
@@ -161,7 +177,7 @@ TRANSLATIONS = {
         "installation_progress": "安装进度",
         "please_wait": "请稍候...",
         "main_menu": "主菜单",
-        "disk_selection": "选择磁盘",
+        "disk_selection": "选择系统安装磁盘",
         "authentication": "认证设置",
         "loading_disks": "正在加载磁盘信息...",
         "disk_name": "磁盘名称",
@@ -202,6 +218,10 @@ TRANSLATIONS = {
         "storage_pool_description": (
             "请选择存储池的RAID级别和所用的磁盘设备。\n"
             "您也可以跳过该步骤在系统安装后通过管理后台创建存储池。"
+        ),
+        "disk_selection_description": (
+            "请选择系统安装所用的磁盘，如果选择的磁盘数量超过1个，将会用RAID1创建磁盘设备。 \n"
+            "系统安装磁盘只用于安装系统，不能用于创建存储池。"
         ),
         "raid_level": "RAID级别",
         "available_disks": "可用磁盘",
@@ -247,6 +267,17 @@ TRANSLATIONS = {
             "{type} 需要至少 {required} 个磁盘，但当前只选择了 {current} 个磁盘。\n"
             "已清除当前磁盘选择，请重新选择磁盘。"
         ),
+        "pool_creation_warning": """
+            此操作将删除以下磁盘上的所有数据：
+            {disk_names}
+
+            存储池配置信息：
+            - RAID级别：{topology}
+            - 磁盘数量：{disk_count}
+            - 可用空间：{usable_space}
+
+            是否继续创建存储池？
+        """,
     },
 }
 
