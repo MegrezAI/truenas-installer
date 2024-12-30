@@ -123,6 +123,13 @@ class DiskSelectionPage(QFrame):
         setFont(self.title, 24)
         layout.addWidget(self.title)
 
+        # 描述
+        self.description = SubtitleLabel(
+            self.i18n.get("disk_selection_description"), self
+        )
+        setFont(self.description, 14)
+        layout.addWidget(self.description)
+
         # 创建卡片容器
         card = CardWidget(self)
         card_layout = QVBoxLayout(card)
@@ -246,6 +253,7 @@ class DiskSelectionPage(QFrame):
 
     def update_texts(self):
         self.title.setText(self.i18n.get("disk_selection"))
+        self.description.setText(self.i18n.get("disk_selection_description"))
         self.next_button.setText(self.i18n.get("next"))
         self.back_button.setText(self.i18n.get("back"))
         self.progress_indicator.setText(self.i18n.get("loading_disks"))
