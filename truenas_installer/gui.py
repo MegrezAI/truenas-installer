@@ -596,7 +596,7 @@ class InstallerWindow(QMainWindow):
                 QMessageBox.warning(self, "Error", self.i18n.get("passwords_not_match"))
                 return
             auth_method = {
-                "username": "truenas_admin",
+                "username": "admin",
                 "password": self.pass_input.text()
             }
         else:

@@ -100,7 +100,7 @@ class AuthPage(QFrame):
                 self.i18n.get("error"), self.i18n.get("passwords_not_match"), self
             ).exec()
             return None
-        return {"username": "truenas_admin", "password": self.pass_input.text()}
+        return {"username": "admin", "password": self.pass_input.text()}
 
     def on_back_clicked(self):
         window = self.window()

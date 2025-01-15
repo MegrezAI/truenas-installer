@@ -35,7 +35,7 @@ __all__ = ["install"]
             "properties": {
                 "username": {
                     "type": "string",
-                    "enum": ["truenas_admin", "root"],
+                    "enum": ["admin", "root"],
                 },
                 "password": {
                     "type": "string",

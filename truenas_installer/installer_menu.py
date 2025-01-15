@@ -123,7 +123,7 @@ class InstallerMenu:
         authentication_method = await dialog_menu(
             self.i18n.get("web_ui_auth"),
             {
-                self.i18n.get("admin_user"): self._authentication_truenas_admin,
+                self.i18n.get("admin_user"): self._authentication_admin,
                 self.i18n.get("configure_webui"): self._authentication_webui,
             }
         )
@@ -168,10 +168,10 @@ class InstallerMenu:
         disks_dict = {disk.name: disk for disk in disks}
         return [disks_dict[disk_name] for disk_name in disks_names]
 
-    async def _authentication_truenas_admin(self):
+    async def _authentication_admin(self):
         return await self._authentication_password(
-            "truenas_admin",
-            "Enter your \"truenas_admin\" user password. Root password login will be disabled.",
+            "admin",
+            "Enter your \"admin\" user password. Root password login will be disabled.",
         )
 
     async def _authentication_password(self, username, title):
